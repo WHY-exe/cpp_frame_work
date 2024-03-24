@@ -1,0 +1,85 @@
+#pragma once
+#include <cerrno>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <string>
+#include <system_error>
+
+#include "spdlog/spdlog.h"
+
+namespace util {
+namespace exception {
+struct BasicInfo {
+  uint32_t _line;
+  std::string _file;
+  std::string _func;
+  std::string _msg;
+  std::string _type;
+  BasicInfo(uint32_t line, std::string&& file, std::string&& func,
+            std::string&& msg, std::string&& type);
+  ~BasicInfo() = default;
+  BasicInfo(const BasicInfo& lv_rhs) = default;
+  BasicInfo& operator=(const BasicInfo& lv_rhs) = default;
+  BasicInfo(BasicInfo&& rv_rhs) noexcept = default;
+  BasicInfo& operator=(BasicInfo&& rv_rhs) noexcept = default;
+  std::string GenBasicInfo() const noexcept;
+};
+
+class Basic : public std::exception {
+ private:
+  BasicInfo m_info;
+  mutable std::string m_error_str;
+
+ public:
+  Basic(uint32_t line, std::string&& file, std::string&& func,
+        std::string&& msg, std::string&& type);
+  Basic(const Basic&) = default;
+  Basic& operator=(const Basic&) = default;
+  Basic(Basic&&) = default;
+  Basic& operator=(Basic&&) = default;
+  ~Basic() override = default;
+  const char* what() const noexcept override;
+};
+#ifdef WINDOWS
+std::string FormatWin32Error(uint32_t error_num) noexcept;
+#endif  // WINDOWS
+
+}  // namespace exception
+}  // namespace util
+
+#define GET_BASIC_INFO(error_type)                                         \
+  util::exception::BasicInfo(__LINE__, __FILE__, __func__, "", error_type) \
+      .GenBasicInfo()
+
+#define GET_BASIC_INFO_WITH_MSG(error_type, error_msg)                \
+  util::exception::BasicInfo(__LINE__, __FILE__, __func__, error_msg, \
+                             error_type)                              \
+      .GenBasicInfo()
+
+#define THROW_BASIC_EXCEPTION(error_msg)                                \
+  throw util::exception::Basic(__LINE__, __FILE__, __func__, error_msg, \
+                               "BasicError")
+
+// #ifdef LINUX
+#define THROW_SYSTEM_ERROR                                                \
+  throw std::system_error(std::error_code(errno, std::system_category()), \
+                          GET_BASIC_INFO("system error"))
+// #endif
+
+#define LOG_SYSTEM_ERROR                                                    \
+  spdlog::error("{}",                                                       \
+                util::exception::BasicInfo(__LINE__, __FILE__, __func__,    \
+                                           strerror(errno), "system error") \
+                    .GenBasicInfo())
+
+#ifdef WINDOWS
+#define THROW_WIN_ERROR                                        \
+  throw std::system_error(                                     \
+      std::error_code(GetLastError(), std::system_category()), \
+      GET_BASIC_INFO("win32 error"))
+
+#define LOG_WIN_ERROR \
+    spdlog::error("{}", util::exception::BasicInfo(__LINE__, __FILE__, __func__, util::exception::FormatWin32Error(GetLastError()), "win32 error").GenBasicInfo()
+
+#endif  // WINDOWS
