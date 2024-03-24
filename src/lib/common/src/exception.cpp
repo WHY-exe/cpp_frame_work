@@ -19,9 +19,6 @@ BasicInfo::BasicInfo(uint32_t line, std::string&& file, std::string&& func,
       _type(std::move(type)) {}
 
 std::string BasicInfo::GenBasicInfo() const noexcept {
-  // std::stringstream ss;
-  // ss << "[" << _type << "] " << _file << "(" << _func << ":" << _line << ") "
-  // << _msg; return ss.str();
   return fmt::format("[{}][{}:{}][{}]{}", _type, _file, _line, _func, _msg);
 }
 
@@ -40,22 +37,15 @@ std::string util::exception::FormatWin32Error(uint32_t error_num) noexcept {
   std::string err("");
   if (error_num == 0) error_num = GetLastError();
   LPTSTR lpBuffer = NULL;
-  if (0 ==
-      FormatMessage(
-          FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-              FORMAT_MESSAGE_IGNORE_INSERTS,  // ��־λ���������˵��lpSource������dwFlags�ĵ�λָ����δ������й����������������Ҳ���������ȵĸ�ʽ�������,��ѡ������
-          NULL,       // ����dwFlags��־������
-          error_num,  // �������Ϣ�ı�ʶ������dwFlags��־ΪFORMAT_MESSAGE_FROM_STRINGʱ�ᱻ���ԡ�
-          MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),  // �������Ϣ�����Ա�ʶ����
-          (LPTSTR)&lpBuffer,  // ���մ�����Ϣ�����Ļ�����ָ�롣
-          0,  // ���FORMAT_MESSAGE_ALLOCATE_BUFFER��־û�б�ָ���������������ָ��Ϊ����������Ĵ�С�����ָ��ֵΪ0���������ָ��Ϊ������������������С����
-          NULL  // �����ʽ����Ϣ�еĲ���ֵ��һ�����顣
-          )) {  // ʧ��
+  if (0 == FormatMessage(
+               FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
+                   FORMAT_MESSAGE_IGNORE_INSERTS,
+               NULL, error_num, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+               (LPTSTR)&lpBuffer, 0, NULL)) {
     char tmp[100] = {0};
     sprintf_s(tmp, "undefine error description(%d)", error_num);
     err = tmp;
-  } else  // �ɹ�
-  {
+  } else {
     err = lpBuffer;
   }
   return err;

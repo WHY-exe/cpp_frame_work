@@ -9,7 +9,7 @@ add_executable(${PROJECT_NAME} ${main} ${include_file})
 target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${INCLUDE_BASE}/${PROJECT_NAME}
-    ${THIRD_PARTY_INCLUDE}/Catch2/src/catch2
+    ${THIRD_PARTY_INCLUDE}/Catch2/src
 )
 
 target_link_libraries(${PROJECT_NAME} 

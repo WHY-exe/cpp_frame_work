@@ -93,7 +93,7 @@ int Config::InitConfig() {
   }
   ifs.close();
   m_sections.push_back(std::move(section));
-  return m_sections.size();
+  return (int)m_sections.size();
 }
 
 void Config::UpdateFile() const {
