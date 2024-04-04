@@ -61,17 +61,15 @@ std::string FormatWin32Error(uint32_t error_num) noexcept;
   throw util::exception::Basic(__LINE__, __FILE__, __func__, error_msg, \
                                "BasicError")
 
+#define LOG_ERROR_COUT(x) \
+  spdlog::error("({}:{})[{}]: {}", __FILE__, __LINE__, __func__, x)
+
 // #ifdef LINUX
 #define THROW_SYSTEM_ERROR                                                \
   throw std::system_error(std::error_code(errno, std::system_category()), \
                           GET_BASIC_INFO("system error"))
+#define LOG_SYSTEM_ERROR_COUT LOG_ERROR_COUT(strerror(errno))
 // #endif
-
-#define LOG_SYSTEM_ERROR                                                    \
-  spdlog::error("{}",                                                       \
-                util::exception::BasicInfo(__LINE__, __FILE__, __func__,    \
-                                           strerror(errno), "system error") \
-                    .GenBasicInfo())
 
 #ifdef WINDOWS
 #define THROW_WIN_ERROR                                        \
@@ -79,7 +77,7 @@ std::string FormatWin32Error(uint32_t error_num) noexcept;
       std::error_code(GetLastError(), std::system_category()), \
       GET_BASIC_INFO("win32 error"))
 
-#define LOG_WIN_ERROR \
-    spdlog::error("{}", util::exception::BasicInfo(__LINE__, __FILE__, __func__, util::exception::FormatWin32Error(GetLastError()), "win32 error").GenBasicInfo()
+#define LOG_WIN_ERROR_COUT \
+  LOG_ERROR_COUT(util::exception::FormatWin32Error(GetLastError()))
 
 #endif  // WINDOWS
