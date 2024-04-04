@@ -6,16 +6,17 @@
 #include "common/util.h"
 #include "posix_compat.h"
 #include "spdlog/spdlog.h"
-
 #ifdef LINUX
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #endif  // LINUX
-
+#include <iostream>
 namespace prj_exec1 {
 void HandleQuitSignal(int signal) noexcept {
   SignalHandler sh{};
   sh.Prepare();
+  rlimit rlim{0};
+  getrlimit(RLIMIT_CORE, &rlim);
   switch (signal) {
     case SIGSEGV:
       spdlog::error("segment fault, there might be problems in code");
@@ -44,6 +45,7 @@ void HandleQuitSignal(int signal) noexcept {
       spdlog::error("recieving signal %d, stopping the instance", signal);
       break;
   }
+  sh.GenCoreDump();
   exit(1);
 }
 
@@ -72,22 +74,23 @@ SignalHandler::SignalHandler() noexcept : m_core_size(0) {}
 
 void SignalHandler::Prepare() noexcept {
 #ifdef LINUX
-  struct rlimit rlim, rlim_new;
+  rlimit rlim{0};
   if (prctl(PR_SET_DUMPABLE, 1) < 0) {
-    LOG_SYSTEM_ERROR;
+    LOG_SYSTEM_ERROR_COUT;
+    return;
   }
   if (m_core_size == 0) {
     m_core_size = RLIM_INFINITY;
   }
-  if (getrlimit(RLIMIT_CORE, &rlim) == 0) {
-    rlim_new.rlim_cur = m_core_size;
-    rlim_new.rlim_max = m_core_size;
-  }
-  if (setrlimit(RLIMIT_CORE, &rlim_new) != 0) {
-    /* failed. try raising just to the old m_core_size */
-    rlim_new.rlim_cur = rlim.rlim_max;
-    rlim_new.rlim_max = rlim.rlim_max;
-  }
+  rlim.rlim_cur = m_core_size;
+  rlim.rlim_max = m_core_size;
+  setrlimit(RLIMIT_CORE, &rlim);
+#endif
+}
+
+void SignalHandler::GenCoreDump() noexcept {
+#ifdef LINUX
+  system(fmt::format("gcore {}", getpid(), getpid()).c_str());
 #endif
 }
 
