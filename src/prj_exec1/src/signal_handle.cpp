@@ -15,8 +15,6 @@ namespace prj_exec1 {
 void HandleQuitSignal(int signal) noexcept {
   SignalHandler sh{};
   sh.Prepare();
-  rlimit rlim{0};
-  getrlimit(RLIMIT_CORE, &rlim);
   switch (signal) {
     case SIGSEGV:
       spdlog::error("segment fault, there might be problems in code");
