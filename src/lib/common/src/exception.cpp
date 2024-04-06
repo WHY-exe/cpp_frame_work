@@ -13,13 +13,17 @@ namespace exception {
 BasicInfo::BasicInfo(uint32_t line, std::string&& file, std::string&& func,
                      std::string&& msg, std::string&& type)
     : _line(line),
-      _file(std::filesystem::path(file).filename().string()),
+      _file(std::move(file)),
       _func(std::move(func)),
       _msg(std::move(msg)),
       _type(std::move(type)) {}
 
 std::string BasicInfo::GenBasicInfo() const noexcept {
-  return fmt::format("[{}][{}:{}][{}]{}", _type, _file, _line, _func, _msg);
+  namespace fs = std::filesystem;
+  fs::path file(_file);
+  const std::string module_name = (--(--(--file.end())))->string();
+  return fmt::format("[{}][{}][{}:{}][{}]{}", _type, module_name,
+                     file.filename().string(), _line, _func, _msg);
 }
 
 Basic::Basic(uint32_t line, std::string&& file, std::string&& func,
