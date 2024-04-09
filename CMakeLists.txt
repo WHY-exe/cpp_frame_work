@@ -10,11 +10,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     # 设置Debug编译选项
     if (POLICY CMP0141)
         cmake_policy(SET CMP0141 NEW)
-        set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT 
-        "$<IF: $< AND: $<C_COMPILER_ID:MSVC>, $<CXX_COMPILER_ID:MSVC> >,
-            $< $<CONFIG:Debug,RelWithDebInfo>:EditAndContinue >,
-            $< $<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase >
-        >")
+        set(CMAKE_MSVC_DEBUG_INFORMATION_FORMAT "$<IF: $< AND: $<C_COMPILER_ID:MSVC>, $<CXX_COMPILER_ID:MSVC> >, $< $<CONFIG:Debug,RelWithDebInfo>:EditAndContinue >, $< $<CONFIG:Debug,RelWithDebInfo>:ProgramDatabase>>")
     endif()
     # 开启多线程编译
     cmake_host_system_information(RESULT CPU_NUMBER_OF_LOGICAL_CORES QUERY NUMBER_OF_LOGICAL_CORES)
@@ -37,9 +33,10 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
     add_definitions(-DWINDOWS)
 endif()
-
-add_definitions(-DSPDLOG_COMPILED_LIB)
-add_definitions(-D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
+add_compile_definitions(
+    -DSPDLOG_COMPILED_LIB
+    -D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
+    -DASIO_SEPARATE_COMPILATION)
 # solve the cmake windows dll problem by
 # specifying the global dll ouput path
 set(bin_output_dir "${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
@@ -64,9 +61,6 @@ link_directories(
     ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
     ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
 )
-
-add_definitions(-DSPDLOG_COMPILED_LIB)
-add_definitions(-D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING)
 
 add_subdirectory(src)
 add_subdirectory(third-party)
