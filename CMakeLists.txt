@@ -24,7 +24,7 @@ else()
     # 设置Release编译选项
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
-    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU" AND UNIX)
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -lpthread")
     endif()
 endif()
