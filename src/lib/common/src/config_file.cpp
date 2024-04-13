@@ -1,7 +1,6 @@
 ﻿#include "config_file.h"
 
 #include <algorithm>
-#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <regex>
@@ -166,4 +165,4 @@ std::ostream &operator<<(std::ostream &os, const ConfigSection &section) {
   return os;
 }
 
-}  // namespace util
+} // namespace util

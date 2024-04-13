@@ -3,14 +3,12 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <iostream>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 
 #include "exception.h"
 #include "posix_compat.h"
-#include "spdlog/spdlog.h"
+
 namespace util {
 std::string exec_cmd::GetLine(const std::string &cmd) {
   std::unique_ptr<FILE, std::function<void(FILE *)>> pfileStream(
@@ -172,11 +170,7 @@ uint64_t HexToDec(const std::string &hex) {
   return iRet;
 }
 
-std::string DecToHex(int dec) {
-  std::stringstream ss;
-  ss << std::hex << dec;
-  return ss.str();
-}
+std::string DecToHex(int dec) { return fmt::format("{:#X}", dec); }
 
 std::string RemoveCharInStr(const std::string &target, char ch) noexcept {
   std::string strRet{};
@@ -201,4 +195,4 @@ std::string RemoveCharInStr(const std::string &target,
                });
   return strRet;
 }
-}  // namespace util
+} // namespace util

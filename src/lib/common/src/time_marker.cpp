@@ -14,4 +14,4 @@ float TimeMarker::Peek() const {
   return duration<float>(steady_clock::now() - m_recorded_time).count();
 }
 
-}  // namespace util
+} // namespace util

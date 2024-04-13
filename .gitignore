@@ -8,3 +8,4 @@ bin/
 # ignore vscode settings file
 # .vscode/
 .vs/
+.cache/
