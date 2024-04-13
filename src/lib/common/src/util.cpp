@@ -1,13 +1,13 @@
 ﻿#include "util.h"
 
+#include "exception.h"
+#include "posix_compat.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <list>
 #include <string>
 #include <unordered_map>
-
-#include "exception.h"
-#include "posix_compat.h"
 
 namespace util {
 std::string exec_cmd::GetLine(const std::string &cmd) {

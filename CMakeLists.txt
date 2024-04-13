@@ -34,9 +34,9 @@ elseif(CMAKE_SYSTEM_NAME MATCHES "Windows")
     add_definitions(-DWINDOWS)
 endif()
 add_compile_definitions(
-    -DSPDLOG_COMPILED_LIB
-    -D_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
-    -DASIO_SEPARATE_COMPILATION)
+    SPDLOG_COMPILED_LIB
+    _SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING
+    ASIO_SEPARATE_COMPILATION)
 # solve the cmake windows dll problem by
 # specifying the global dll ouput path
 set(bin_output_dir "${PROJECT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
