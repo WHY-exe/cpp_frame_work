@@ -1,17 +1,95 @@
 ﻿#include "config_file.h"
 
+#include "spdlog/fmt/fmt.h"
+#include "util.h"
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
 #include <regex>
-#include <sstream>
-
-#include "util.h"
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace util {
+Config::Section::Section(std::string &&name) noexcept { Init(std::move(name)); }
+
+void Config::Section::Init(std::string &&name) noexcept {
+  m_config.clear();
+  m_name = std::move(name);
+}
+
+void Config::Section::AddConf(std::string &&key, std::string &&value) {
+  m_config.emplace_back(Info{std::move(key), std::move(value)});
+}
+
+bool Config::Section::IsInit() const noexcept { return !m_name.empty(); }
+
+void Config::Section::WriteConf(const std::string &key,
+                                const std::string &value) {
+  auto it =
+      std::find_if(m_config.begin(), m_config.end(),
+                   [&key](const Info &cur) -> bool { return cur.key == key; });
+  if (it != m_config.end()) {
+    it->value = value;
+  } else {
+    m_config.emplace_back(Info{key, value});
+  }
+}
+
+const std::string &Config::Section::ReadConf(const std::string &key) const {
+  // 查找是否该key是否已经存在
+  auto it =
+      std::find_if(m_config.cbegin(), m_config.cend(),
+                   [&key](const Info &cur) -> bool { return cur.key == key; });
+  if (it == m_config.cend()) {
+    return m_config.emplace_back(Info{key, ""}).value;
+  }
+  return it->value;
+}
+
+std::string &Config::Section::operator[](const std::string &key) {
+  // 查找是否该key是否已经存在
+  auto it =
+      std::find_if(m_config.begin(), m_config.end(),
+                   [&key](const Info &cur) -> bool { return cur.key == key; });
+  if (it == m_config.end()) {
+    return m_config.emplace_back(Info{key, ""}).value;
+  }
+  return it->value;
+}
+
+const std::string &Config::Section::operator[](const std::string &key) const {
+  return ReadConf(key);
+}
+
+Config::Section &Config::operator[](std::string &&section_name) {
+  return GetSection(std::move(section_name));
+}
+
+Config::Section &Config::GetSection(std::string &&section_name) {
+  auto it = std::find_if(m_sections.begin(), m_sections.end(),
+                         [&section_name](const Section &cur) -> bool {
+                           return cur.m_name == section_name;
+                         });
+  if (it == m_sections.end()) {
+    return m_sections.emplace_back(Section(std::move(section_name)));
+  }
+  return *it;
+}
+
+std::ostream &operator<<(std::ostream &os, const Config::Section &section) {
+  os << "[" << section.m_name << "]" << std::endl;
+  for (const auto &i : section.m_config) {
+    os << i.key << "=" << i.value << std::endl;
+  }
+  return os;
+}
+
 Config::Config(const std::string &file_path) : Config() { Init(file_path); }
 
-// 初始化
+Config::~Config() noexcept { Close(); };
+
 bool Config::Init(const std::string &file_path) {
   if (!std::filesystem::exists(file_path)) {
     return false;
@@ -25,70 +103,45 @@ bool Config::Init(const std::string &file_path) {
   return true;
 }
 
-ConfigSection &Config::operator[](const std::string &section_name) {
-  return GetSection(section_name);
-}
-
-const ConfigSection &Config::operator[](const std::string &section_name) const {
-  return GetSection(section_name);
-}
-
-ConfigSection &Config::GetSection(const std::string &section_name) {
-  auto it = std::find_if(m_sections.begin(), m_sections.end(),
-                         [&section_name](const ConfigSection &cur) -> bool {
-                           return cur.m_name == section_name;
-                         });
-  if (it == m_sections.end()) {
-    return m_sections.emplace_back(ConfigSection(section_name));
-  }
-  return *it;
-}
-
-const ConfigSection &Config::GetSection(const std::string &section_name) const {
-  auto it = std::find_if(m_sections.cbegin(), m_sections.cend(),
-                         [&section_name](const ConfigSection &cur) -> bool {
-                           return cur.m_name == section_name;
-                         });
-  if (it == m_sections.cend()) {
-    return m_sections.emplace_back(ConfigSection(section_name));
-  }
-  return *it;
-}
-
-void Config::Close() {
-  m_file_path = "";
-  m_sections.clear();
-}
+void Config::Clear() noexcept { m_sections.clear(); }
 
 int Config::UpdateConfig() {
-  Close();
+  Clear();
   return InitConfig();
 }
 
 int Config::InitConfig() {
+  // use regex to tell wether it should be
+  // a section
   std::regex sect_name_regex(R"(\[\w+?\])");
   std::smatch sm;
+  // open the section file
   std::ifstream ifs(m_file_path);
-  ConfigSection section;
-  int line_num = 0;
+  Section section;
+  std::vector<std::string> file_content;
+  // iterate through every line
   for (std::string line; std::getline(ifs, line);) {
-    line_num++;
-    if (line[0] == '#' || line[0] == '\n') {
+    // ignore the comment and the newline character
+    if (std::string_view("#\n;").find(line[0]) != std::string::npos) {
       continue;
     }
+    // tell wether the line content match the
+    // config section style
     if (std::regex_search(line, sm, sect_name_regex)) {
       section.Init(sm.str().substr(1, sm.str().length() - 2));
-      if (line_num != 1) {
+      if (!section.IsInit() && !m_sections.empty()) {
         m_sections.push_back(std::move(section));
         continue;
       }
+    } else if (!section.IsInit()) {
+      section.Init("");
     }
-    const auto tmp = util::Split(line, "=");
+    // insert the value to the section
+    auto tmp = util::Split(line, "=");
     if (tmp.size() != 2) {
       continue;
     }
-
-    section.AddConf(tmp[0], tmp[1]);
+    section.AddConf(std::move(tmp[0]), std::move(tmp[1]));
   }
   ifs.close();
   m_sections.push_back(std::move(section));
@@ -96,73 +149,21 @@ int Config::InitConfig() {
 }
 
 void Config::UpdateFile() const {
-  std::stringstream ss_bak_file;
-  ss_bak_file << m_file_path << "_bak";
-  std::ofstream ofs(ss_bak_file.str(), std::ios::out | std::ios::trunc);
+  const auto bak_file_path = fmt::format("{}_bak", m_file_path);
+  std::ofstream ofs(bak_file_path, std::ios::out | std::ios::trunc);
+  if (!ofs.is_open()) {
+    return;
+  }
   for (const auto &it : m_sections) {
     ofs << it;
   }
   ofs.close();
-  std::filesystem::copy(ss_bak_file.str(), m_file_path);
-  std::filesystem::remove(ss_bak_file.str());
+  std::filesystem::rename(bak_file_path, m_file_path);
 }
 
-ConfigSection::ConfigSection(const std::string &name) noexcept : m_name(name) {}
-
-void ConfigSection::Init(const std::string &name) noexcept {
-  m_config.clear();
-  m_name = name;
-}
-
-bool ConfigSection::IsInit() const noexcept { return m_name.empty(); }
-
-void ConfigSection::WriteConf(const std::string &key,
-                              const std::string &value) {
-  auto it =
-      std::find_if(m_config.begin(), m_config.end(),
-                   [&key](const Info &cur) -> bool { return cur.key == key; });
-  if (it != m_config.end()) {
-    it->value = value;
-  } else {
-    m_config.emplace_back(Info{key, value});
-  }
-}
-
-void ConfigSection::AddConf(const std::string &key, const std::string &value) {
-  m_config.emplace_back(Info{key, value});
-}
-
-const std::string &ConfigSection::ReadConf(const std::string &key) const {
-  // 查找是否该key是否已经存在
-  auto it =
-      std::find_if(m_config.cbegin(), m_config.cend(),
-                   [&key](const Info &cur) -> bool { return cur.key == key; });
-  if (it == m_config.cend()) {
-    return m_config.emplace_back(Info{key, ""}).value;
-  }
-  return it->value;
-}
-
-std::string &ConfigSection::operator[](const std::string &key) {
-  // 查找是否该key是否已经存在
-  auto it =
-      std::find_if(m_config.begin(), m_config.end(),
-                   [&key](const Info &cur) -> bool { return cur.key == key; });
-  if (it == m_config.end()) {
-    return m_config.emplace_back(Info{key, ""}).value;
-  }
-  return it->value;
-}
-
-const std::string &ConfigSection::operator[](const std::string &key) const {
-  return ReadConf(key);
-}
-
-std::ostream &operator<<(std::ostream &os, const ConfigSection &section) {
-  for (const auto &i : section.m_config) {
-    os << i.key << "=" << i.value << std::endl;
-  }
-  return os;
+void Config::Close() {
+  UpdateFile();
+  Clear();
 }
 
 } // namespace util

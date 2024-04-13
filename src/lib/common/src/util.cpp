@@ -1,7 +1,9 @@
 ﻿#include "util.h"
 
 #include "exception.h"
+#ifdef WINDOWS
 #include "posix_compat.h"
+#endif
 #include <algorithm>
 #include <cmath>
 #include <cstdio>

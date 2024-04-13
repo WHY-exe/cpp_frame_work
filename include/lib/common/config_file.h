@@ -2,71 +2,137 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+/**
+ * @brief .ini file parsing, updating the file when the instance is destroyed
+ *        not thread-safe, watch for race condition
+ */
 namespace util {
-struct Info {
-  std::string key;
-  std::string value;
-  Info() noexcept = default;
-  ~Info() noexcept = default;
-  explicit Info(const std::string &key, const std::string &value) noexcept
-      : key(key), value(value) {}
-};
-
-class ConfigSection {
-  friend class Config;
-
-private:
-  std::string m_name;
-  mutable std::vector<Info> m_config;
-
-public:
-  ConfigSection() noexcept = default;
-  ~ConfigSection() noexcept = default;
-
-private:
-  explicit ConfigSection(const std::string &name) noexcept;
-  void Init(const std::string &name) noexcept;
-  void AddConf(const std::string &key, const std::string &value);
-  friend std::ostream &operator<<(std::ostream &os,
-                                  const ConfigSection &section);
-
-public:
-  bool IsInit() const noexcept;
-  // 写配置文件
-  void WriteConf(const std::string &key, const std::string &value);
-  // 读配置文件
-  const std::string &ReadConf(const std::string &key) const;
-
-  std::string &operator[](const std::string &key);
-  const std::string &operator[](const std::string &key) const;
-};
-
 class Config {
+  struct Info {
+    std::string key;
+    std::string value;
+  };
+
+  class Section {
+    friend class Config;
+    friend std::ostream &operator<<(std::ostream &os, const Section &section);
+
+  private:
+    std::string m_name;
+    mutable std::vector<Info> m_config;
+
+  public:
+    Section() noexcept = default;
+    ~Section() noexcept = default;
+
+  private:
+    /**
+     * @brief Construct a new Config Section object
+     *        by calling the Init method
+     * @param name
+     */
+    explicit Section(std::string &&name) noexcept;
+    /**
+     * @brief initialize the name of the section
+     * @param [in] name
+     */
+    void Init(std::string &&name) noexcept;
+    /**
+     * @brief add condifg name and value to the vector
+     * @param key config key
+     * @param value config value
+     */
+    void AddConf(std::string &&key, std::string &&value);
+
+  public:
+    /**
+     * @brief tell wether the name of the section is empty
+     * @return wether the name of the section is empty
+     */
+    bool IsInit() const noexcept;
+    /**
+     * @brief writing to config stored in memory
+     * @param [in] key config name
+     * @param [in] value config value
+     */
+    void WriteConf(const std::string &key, const std::string &value);
+    /**
+     * @brief reading from config stored in memory
+     * @param [in] key config name
+     * @return config value
+     */
+    const std::string &ReadConf(const std::string &key) const;
+    /**
+     * @brief get the reference of the value
+     *        corresponding to specific key
+     * @param [in] key the config key
+     * @return the reference of the value
+     */
+    std::string &operator[](const std::string &key);
+    const std::string &operator[](const std::string &key) const;
+  };
+  friend std::ostream &operator<<(std::ostream &os, const Section &section);
+
 private:
   std::string m_file_path;
-  mutable std::vector<ConfigSection> m_sections;
+  mutable std::vector<Section> m_sections;
 
 private:
   int InitConfig();
 
 public:
   Config() noexcept = default;
-  ~Config() noexcept = default;
-  explicit Config(const std::string &file_path);
-  // 初始化
+  /**
+   * @brief Destroy the Config object
+   *        and update the config file
+   */
+  ~Config() noexcept;
+  /**
+   * @brief reading the file and fill the
+   *        section buffer
+   * @param [in] file_path the ini file path
+   */
   bool Init(const std::string &file_path);
-  ConfigSection &operator[](const std::string &section_name);
-  const ConfigSection &operator[](const std::string &section_name) const;
+  /**
+   * @brief Construct a new Config object
+   *        by calling the Init method
+   * @param [in] file_path
+   */
+  explicit Config(const std::string &file_path);
 
-  ConfigSection &GetSection(const std::string &section_name);
-  const ConfigSection &GetSection(const std::string &section_name) const;
+  /**
+   * @brief get the config section with specific
+   *        section name
+   * @param [in] section_name the section name
+   * @return the corresponding section reference
+   */
+  Section &GetSection(std::string &&section_name);
+  /**
+   * @brief sugar of the GetSection method
+   *
+   * @param section_name
+   * @return Section&
+   */
+  Section &operator[](std::string &&section_name);
+  /**
+   * @brief clear the Section buffer
+   */
+  void Clear() noexcept;
+  /**
+   * @brief update the file with the config section and
+   *        clear the section buffer
+   */
   void Close();
-  // 将所有项读取到map
-  // 返回读取到的项数
+  /**
+   * @brief updating the section buffer by
+   *        rereading the ini file
+   * @return the number of the current sections
+   */
   int UpdateConfig();
-  // 将map中的所有项写入文件
-  // 返回写入到的项数
+  /**
+   * @brief updating the .ini file by writing sections
+   *        to the .ini file
+   */
   void UpdateFile() const;
 };
 
