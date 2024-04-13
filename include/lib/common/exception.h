@@ -51,11 +51,6 @@ std::string FormatWin32Error(uint32_t error_num) noexcept;
   util::exception::BasicInfo(__LINE__, __FILE__, __func__, "", error_type)     \
       .GenBasicInfo()
 
-#define GET_BASIC_INFO_WITH_MSG(error_type, error_msg)                         \
-  util::exception::BasicInfo(__LINE__, __FILE__, __func__, error_msg,          \
-                             error_type)                                       \
-      .GenBasicInfo()
-
 #define THROW_EXCEPTION(error_msg, type)                                       \
   throw util::exception::Basic(__LINE__, __FILE__, __func__, error_msg, type)
 
