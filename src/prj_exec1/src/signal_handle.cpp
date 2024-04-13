@@ -2,6 +2,7 @@
 
 #include <csignal>
 
+#include "common/exception.h"
 #include "spdlog/spdlog.h"
 #ifdef LINUX
 #include <sys/prctl.h>

@@ -8,7 +8,9 @@ App::App() {}
 App::~App() {}
 
 void App::Run() {
+#ifdef LINUX
   spdlog::info("hello world");
+#endif
   THROW_EXCEPTION("Hello exception", "basic");
 }
 

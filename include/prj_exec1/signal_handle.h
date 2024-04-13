@@ -2,10 +2,10 @@
 #include <cstdint>
 namespace prj_exec1 {
 class SignalHandler {
- private:
+private:
   uint64_t m_core_size;
 
- public:
+public:
   SignalHandler() noexcept;
   ~SignalHandler() noexcept = default;
   void Prepare() noexcept;
@@ -14,4 +14,4 @@ class SignalHandler {
 
 void HandleQuitSignal(int signal) noexcept;
 void HandleSignal() noexcept;
-}  // namespace prj_exec1
+} // namespace prj_exec1
