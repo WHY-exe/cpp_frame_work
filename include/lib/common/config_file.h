@@ -3,8 +3,8 @@
 #include <string>
 #include <vector>
 /**
- * @brief .ini file parsing, updating the file when the instance is destroyed
- *        not thread-safe, watch for race condition
+ * @brief .ini file parsing, won''t updating the file when the instance is
+ * destroyed not thread-safe, watch for race condition
  */
 namespace util {
 class Config {
@@ -82,11 +82,7 @@ private:
 
 public:
   Config() noexcept = default;
-  /**
-   * @brief Destroy the Config object
-   *        and update the config file
-   */
-  ~Config() noexcept;
+  ~Config() noexcept = default;
   /**
    * @brief reading the file and fill the
    *        section buffer

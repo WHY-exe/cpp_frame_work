@@ -88,8 +88,6 @@ std::ostream &operator<<(std::ostream &os, const Config::Section &section) {
 
 Config::Config(const std::string &file_path) : Config() { Init(file_path); }
 
-Config::~Config() noexcept { Close(); };
-
 bool Config::Init(const std::string &file_path) {
   if (!std::filesystem::exists(file_path)) {
     return false;
