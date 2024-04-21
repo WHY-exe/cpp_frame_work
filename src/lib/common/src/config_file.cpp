@@ -1,10 +1,12 @@
 ﻿#include "config_file.h"
 
+#include "log.h"
 #include "spdlog/fmt/bundled/core.h"
 #include "util.h"
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <ios>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -79,14 +81,20 @@ Config::Section &Config::GetSection(std::string &&section_name) {
 }
 
 std::ostream &operator<<(std::ostream &os, const Config::Section &section) {
-  os << "[" << section.name_ << "]" << std::endl;
+  if (!section.name_.empty()) {
+    os << "[" << section.name_ << "]" << std::endl;
+  }
   for (const auto &i : section.config_) {
     os << i.key << "=" << i.value << std::endl;
   }
   return os;
 }
 
-Config::Config(const std::string &file_path) : Config() { Init(file_path); }
+Config::Config(const std::string &file_path) : Config() {
+  if (!Init(file_path)) {
+    LOG_ERROR_COUT("fail to init config file {}", file_path);
+  }
+}
 
 Config::~Config() noexcept {
   if (!file_path_.empty())
@@ -94,11 +102,17 @@ Config::~Config() noexcept {
 }
 
 bool Config::Init(const std::string &file_path) {
-  if (!std::filesystem::exists(file_path)) {
+  if (file_path.empty()) {
+    LOG_ERROR_COUT("file_path is empty");
     return false;
   }
-  if (file_path.empty() || file_path.length() >= MAX_PATH_LEN) {
+  if (file_path.length() >= MAX_PATH_LEN) {
+    LOG_ERROR_COUT("file_path too long: {}", file_path.length());
     return false;
+  }
+  if (!std::filesystem::exists(file_path)) {
+    std::ofstream ofs(file_path, std::ios::trunc);
+    is_created_ = true;
   }
   file_path_ = file_path;
   sections_.clear();

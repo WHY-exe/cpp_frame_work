@@ -18,12 +18,10 @@ target_link_libraries(${PROJECT_NAME}
     spdlog::spdlog
     Catch2
     Catch2::Catch2WithMain
-    ${platform_specific_lib}
 )
 
 add_dependencies(${PROJECT_NAME} 
     common 
     spdlog::spdlog 
-    ${platform_specific_lib} 
     Catch2 
     Catch2::Catch2WithMain)

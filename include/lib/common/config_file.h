@@ -76,7 +76,7 @@ class Config {
 private:
   std::string file_path_;
   mutable std::vector<Section> sections_;
-  bool save_file_on_destroyed_;
+  bool is_created_;
 
 private:
   int InitConfig();
@@ -94,8 +94,9 @@ public:
   Config() noexcept = default;
   ~Config() noexcept;
   /**
-   * @brief reading the file and fill the
-   *        section buffer
+   * @brief reading the file and fill the section buffer,
+   *        create the file if not exists
+   *
    * @param [in] file_path the ini file path
    */
   bool Init(const std::string &file_path);
@@ -120,6 +121,7 @@ public:
    * @return Section&
    */
   Section &operator[](std::string &&section_name);
+  inline bool IsCreated() const noexcept { return is_created_; }
   /**
    * @brief update the file with the config section and
    *        clear the section buffer
