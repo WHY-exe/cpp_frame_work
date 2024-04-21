@@ -5,8 +5,6 @@
 #include <string>
 #include <system_error>
 
-#include "spdlog/spdlog.h"
-
 namespace util {
 namespace exception {
 struct BasicInfo {
@@ -40,9 +38,6 @@ public:
   ~Basic() override = default;
   const char *what() const noexcept override;
 };
-#ifdef WINDOWS
-std::string FormatWin32Error(uint32_t error_num) noexcept;
-#endif // WINDOWS
 
 } // namespace exception
 } // namespace util
@@ -54,23 +49,16 @@ std::string FormatWin32Error(uint32_t error_num) noexcept;
 #define THROW_EXCEPTION(error_msg, type)                                       \
   throw util::exception::Basic(__LINE__, __FILE__, __func__, error_msg, type)
 
-#define LOG_ERROR_COUT(x)                                                      \
-  spdlog::error("({}:{})[{}]: {}", __FILE__, __LINE__, __func__, x)
-
 // #ifdef LINUX
-#define THROW_SYSTEM_ERROR                                                     \
+#define THROW_POSIX_ERROR                                                      \
   throw std::system_error(std::error_code(errno, std::system_category()),      \
                           GET_BASIC_INFO("system error"))
-#define LOG_SYSTEM_ERROR_COUT LOG_ERROR_COUT(strerror(errno))
 // #endif
 
-#ifdef WINDOWS
+#ifdef WIN32
 #define THROW_WIN_ERROR                                                        \
   throw std::system_error(                                                     \
       std::error_code(GetLastError(), std::system_category()),                 \
       GET_BASIC_INFO("win32 error"))
-
-#define LOG_WIN_ERROR_COUT                                                     \
-  LOG_ERROR_COUT(util::exception::FormatWin32Error(GetLastError()))
 
 #endif // WINDOWS

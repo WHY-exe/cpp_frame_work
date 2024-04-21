@@ -2,11 +2,11 @@
 
 namespace prj_exec1 {
 class App {
- private:
- public:
+private:
+public:
   App();
   ~App();
   void Run();
 };
 
-}  // namespace prj_exec1
+} // namespace prj_exec1

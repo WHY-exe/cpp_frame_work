@@ -3,9 +3,9 @@
 namespace util {
 class TimeMarker {
 public:
-  TimeMarker();
-  ~TimeMarker() = default;
-  float Mark();
+  TimeMarker() noexcept;
+  ~TimeMarker() noexcept = default;
+  float Mark() noexcept(std::is_arithmetic_v<float>);
   float Peek() const;
 
 private:

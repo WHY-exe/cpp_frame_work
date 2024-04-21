@@ -85,6 +85,7 @@
     },
     "cmake.generator": "Ninja",
     "cmake.configureArgs": [
-        "-DSPDLOG_BUILD_SHARED=on"
+        "-DSPDLOG_BUILD_SHARED=on",
+        "-DSPDLOG_NO_EXCEPTIONS=on"
     ]
 }

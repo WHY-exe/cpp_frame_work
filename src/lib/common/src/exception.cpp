@@ -1,10 +1,6 @@
 ﻿#include "exception.h"
-
+#include "spdlog/fmt/bundled/core.h"
 #include <filesystem>
-#ifdef WINDOWS
-#include <Windows.h>
-#endif // WINDOWS
-
 namespace util {
 namespace exception {
 BasicInfo::BasicInfo(uint32_t line, std::string &&file, std::string &&func,
@@ -29,27 +25,6 @@ const char *Basic::what() const noexcept {
   m_error_str = m_info.GenBasicInfo();
   return m_error_str.c_str();
 }
-
-#ifdef WINDOWS
-std::string FormatWin32Error(uint32_t error_num) noexcept {
-  std::string err("");
-  if (error_num == 0)
-    error_num = GetLastError();
-  LPTSTR lpBuffer = NULL;
-  if (0 == FormatMessage(
-               FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM |
-                   FORMAT_MESSAGE_IGNORE_INSERTS,
-               NULL, error_num, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-               (LPTSTR)&lpBuffer, 0, NULL)) {
-    char tmp[100] = {0};
-    sprintf_s(tmp, "undefine error description(%d)", error_num);
-    err = tmp;
-  } else {
-    err = lpBuffer;
-  }
-  return err;
-}
-#endif // WINDOWS
 
 } // namespace exception
 

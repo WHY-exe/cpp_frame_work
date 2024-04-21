@@ -18,8 +18,8 @@ class Config {
     friend std::ostream &operator<<(std::ostream &os, const Section &section);
 
   private:
-    std::string m_name;
-    mutable std::vector<Info> m_config;
+    std::string name_;
+    mutable std::vector<Info> config_;
 
   public:
     Section() noexcept = default;
@@ -74,15 +74,25 @@ class Config {
   friend std::ostream &operator<<(std::ostream &os, const Section &section);
 
 private:
-  std::string m_file_path;
-  mutable std::vector<Section> m_sections;
+  std::string file_path_;
+  mutable std::vector<Section> sections_;
+  bool save_file_on_destroyed_;
 
 private:
   int InitConfig();
+  /**
+   * @brief updating the .ini file by writing sections
+   *        to the .ini file
+   */
+  void UpdateFile() const;
+  /**
+   * @brief clear the Section buffer
+   */
+  void Clear() noexcept;
 
 public:
   Config() noexcept = default;
-  ~Config() noexcept = default;
+  ~Config() noexcept;
   /**
    * @brief reading the file and fill the
    *        section buffer
@@ -111,10 +121,6 @@ public:
    */
   Section &operator[](std::string &&section_name);
   /**
-   * @brief clear the Section buffer
-   */
-  void Clear() noexcept;
-  /**
    * @brief update the file with the config section and
    *        clear the section buffer
    */
@@ -125,11 +131,6 @@ public:
    * @return the number of the current sections
    */
   int UpdateConfig();
-  /**
-   * @brief updating the .ini file by writing sections
-   *        to the .ini file
-   */
-  void UpdateFile() const;
 };
 
 } // namespace util

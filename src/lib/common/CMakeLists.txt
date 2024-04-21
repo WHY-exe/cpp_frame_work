@@ -18,4 +18,9 @@ target_link_libraries(${PROJECT_NAME}
     spdlog::spdlog
 )
 
+# setting up compile flags
+set_property(TARGET ${PROJECT_NAME} APPEND_STRING
+    PROPERTY COMPILE_FLAGS ${PROJECT_COMPILE_FLAG}
+)
+
 add_dependencies(${PROJECT_NAME} spdlog::spdlog)

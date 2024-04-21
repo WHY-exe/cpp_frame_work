@@ -1,19 +1,23 @@
 ﻿#include "util.h"
-
-#include "exception.h"
-#ifdef WINDOWS
-#include "posix_compat.h"
-#endif
+#include "spdlog/fmt/bundled/core.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
-#include <list>
+#include <cstring>
+#include <functional>
+#include <memory>
 #include <string>
 #include <unordered_map>
+#include <vector>
+
+#ifdef WIN32
+#define popen _popen
+#define pclose _pclose
+#endif
 
 namespace util {
-std::string exec_cmd::GetLine(const std::string &cmd) {
-  std::unique_ptr<FILE, std::function<void(FILE *)>> pfileStream(
+std::optional<std::string> exec_cmd::GetLine(const std::string &cmd) noexcept {
+  std::unique_ptr<FILE, std::function<void(FILE *)>> file(
       popen(cmd.c_str(), "r"), [](FILE *pProc) -> void {
         if (pProc) {
           pclose(pProc);
@@ -21,128 +25,94 @@ std::string exec_cmd::GetLine(const std::string &cmd) {
         }
       });
 
-  char resultBuffer[MAX_BUFFER_SIZE] = {0};
-  if (pfileStream == nullptr) {
-    THROW_SYSTEM_ERROR;
+  char result_buf[MAX_BUFFER_SIZE] = {0};
+  if (file == nullptr) {
+    return nullptr;
   }
-  while (fgets(resultBuffer, MAX_BUFFER_SIZE, pfileStream.get())) {
-    if (strlen(resultBuffer)) {
-      char lastChar = resultBuffer[strlen(resultBuffer) - 1];
-      resultBuffer[strlen(resultBuffer) - 1] =
-          lastChar == '\n' ? '\0' : lastChar;
+  while (fgets(result_buf, MAX_BUFFER_SIZE, file.get())) {
+    if (strlen(result_buf)) {
+      char last_char = result_buf[strlen(result_buf) - 1];
+      result_buf[strlen(result_buf) - 1] = last_char == '\n' ? '\0' : last_char;
       break;
     }
   }
-  return resultBuffer;
+  return result_buf;
 }
 
-std::string exec_cmd::GetAll(const std::string &cmd) {
-  std::unique_ptr<FILE, std::function<void(FILE *)>> pfileStream(
+std::optional<std::string> exec_cmd::GetAll(const std::string &cmd) noexcept {
+  std::unique_ptr<FILE, std::function<void(FILE *)>> file(
       popen(cmd.c_str(), "r"), [](FILE *pProc) -> void {
         if (pProc) {
           pclose(pProc);
           pProc = nullptr;
         }
       });
-  char resultBuffer[MAX_BUFFER_SIZE] = {0};
-  std::string strResult;
-  if (pfileStream == nullptr) {
-    THROW_SYSTEM_ERROR;
+  char result_buf[MAX_BUFFER_SIZE] = {0};
+  std::string result;
+  if (file == nullptr) {
+    return nullptr;
   }
-  while (fgets(resultBuffer, MAX_BUFFER_SIZE, pfileStream.get())) {
-    if (strlen(resultBuffer)) {
-      strResult += resultBuffer;
+  while (fgets(result_buf, MAX_BUFFER_SIZE, file.get())) {
+    if (strlen(result_buf)) {
+      result += result_buf;
     }
   }
-  return strResult;
+  return result;
 }
-#ifdef LINUX
-std::string get_kernel_version() {
-  const std::string cmd = R"(uname -r)";
-  const auto buf = exec_cmd::GetLine(cmd);
-  const auto vecVersion = Split(buf, ".");
-  std::string res;
-  for (const auto &i : vecVersion) {
-    if (i.find("el") != std::string::npos) {
-      break;
-    }
-    res += res.empty() ? i : "." + i;
-  }
-  if (buf.find("plus") != std::string::npos) {
-    res += ".plus";
-  }
-  return res;
-}
-#endif
 
 std::vector<std::string> Split(const std::string &target,
                                const std::string &pattern) {
   size_t last_start_pos = 0;
-  std::vector<std::string> vecResult;
+  std::vector<std::string> result{};
   for (size_t cur_pos = target.find(pattern, last_start_pos);
        cur_pos != std::string::npos;
        cur_pos = target.find(pattern, last_start_pos)) {
-    vecResult.emplace_back(
+    result.emplace_back(
         target.substr(last_start_pos, cur_pos - last_start_pos));
     last_start_pos = cur_pos + pattern.length();
   }
-  vecResult.emplace_back(
+  result.emplace_back(
       target.substr(last_start_pos, target.length() - last_start_pos));
-  return vecResult;
+  return result;
 }
 
-std::string ParsePath(const std::string &path) {
-  std::vector<std::string> vec_dir = Split(path, "/");
-  std::list<std::string> liResult;
-  std::string strResult;
-  for (auto &i : vec_dir) {
-    if (i == ".." && !liResult.empty()) {
-      liResult.pop_back();
-    } else if (!i.empty() && i != ".") {
-      liResult.push_back(std::move(i));
-    }
-  }
-  for (const auto &i : liResult) {
-    strResult += "/" + i;
-  }
-  return strResult;
-}
-std::string RemoveExtraSpaceInStr(const std::string &origin_str) noexcept {
-  bool bAlert = false;
-  std::string szResult = "";
+std::string RemoveExtraSpaceInStr(const std::string &origin_str) {
+  bool alert = false;
+  std::string result = "";
   for (auto i : origin_str) {
     if (i == '\t') {
       i = ' ';
     }
-    if (!bAlert && i == ' ') {
-      szResult += i;
-      bAlert = true;
+    if (!alert && i == ' ') {
+      result += i;
+      alert = true;
     }
-    if (bAlert && i != ' ') {
-      bAlert = false;
+    if (alert && i != ' ') {
+      alert = false;
     }
-    if (bAlert) {
+    if (alert) {
       continue;
     }
-    szResult += i;
+    result += i;
   }
-  return szResult;
+  return result;
 }
+
 std::string RemoveExtraCharInStr(const std::string &origin_str,
                                  char c) noexcept {
-  bool bAlert = false;
-  std::string strRet{};
-  std::copy_if(origin_str.begin(), origin_str.end(), strRet.begin(),
-               [c, &bAlert](char target_cur) -> bool {
-                 if (!bAlert && target_cur == c) {
-                   bAlert = true;
+  bool alert = false;
+  std::string result{};
+  std::copy_if(origin_str.begin(), origin_str.end(), result.begin(),
+               [c, &alert](char target_cur) -> bool {
+                 if (!alert && target_cur == c) {
+                   alert = true;
                  }
-                 if (bAlert && target_cur != c) {
-                   bAlert = false;
+                 if (alert && target_cur != c) {
+                   alert = false;
                  }
-                 return !bAlert;
+                 return !alert;
                });
-  return strRet;
+  return result;
 }
 
 bool ContainAlphaInStr(const std::string &target) noexcept {
@@ -153,23 +123,23 @@ bool ContainAlphaInStr(const std::string &target) noexcept {
 }
 
 uint64_t HexToDec(const std::string &hex) {
-  std::unordered_map<char, size_t> umapHex;
+  std::unordered_map<char, size_t> hex_map{};
   char cHexInit = 'A';
-  char cDecInit = '0';
-  const size_t iHexInit = 10;
-  for (size_t i = 0; i < iHexInit; i++) {
-    umapHex.insert(std::make_pair(cDecInit++, i));
+  char dec_int = '0';
+  const size_t hex_int = 10;
+  for (size_t i = 0; i < hex_int; i++) {
+    hex_map.insert(std::make_pair(dec_int++, i));
   }
-  for (size_t i = iHexInit; i < 16; i++) {
-    umapHex.insert(std::make_pair(cHexInit++, i));
+  for (size_t i = hex_int; i < 16; i++) {
+    hex_map.insert(std::make_pair(cHexInit++, i));
   }
-  uint64_t iRet = 0;
+  uint64_t result = 0;
   size_t x = hex.length() - 1;
   for (auto i : hex) {
-    iRet += umapHex[i] * (uint64_t)pow(16.0, (double)x);
+    result += hex_map[i] * (uint64_t)pow(16.0, (double)x);
     x--;
   }
-  return iRet;
+  return result;
 }
 
 std::string DecToHex(int dec) { return fmt::format("{:#X}", dec); }
