@@ -6,6 +6,7 @@
 #include <cstring>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -27,7 +28,7 @@ std::optional<std::string> exec_cmd::GetLine(const std::string &cmd) noexcept {
 
   char result_buf[MAX_BUFFER_SIZE] = {0};
   if (file == nullptr) {
-    return nullptr;
+    return std::nullopt;
   }
   while (fgets(result_buf, MAX_BUFFER_SIZE, file.get())) {
     if (strlen(result_buf)) {
@@ -50,7 +51,7 @@ std::optional<std::string> exec_cmd::GetAll(const std::string &cmd) noexcept {
   char result_buf[MAX_BUFFER_SIZE] = {0};
   std::string result;
   if (file == nullptr) {
-    return nullptr;
+    return std::nullopt;
   }
   while (fgets(result_buf, MAX_BUFFER_SIZE, file.get())) {
     if (strlen(result_buf)) {
