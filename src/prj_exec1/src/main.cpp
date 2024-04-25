@@ -60,19 +60,14 @@ int main() {
     prj_exec1::App{}.Run();
   } catch (const util::exception::Basic &e) {
     LOG_ERROR_COUT("custom exception: {}", e.what());
-    abort();
   } catch (const std::system_error &e) {
     LOG_ERROR_COUT("system error: {} Code: {}", e.what(), e.code().value());
-    abort();
   } catch (const std::logic_error &e) {
     LOG_ERROR_COUT("logic error: {}", e.what());
-    abort();
   } catch (const std::exception &e) {
     LOG_ERROR_COUT("common exception: {}", e.what());
-    abort();
   } catch (...) {
     LOG_ERROR_COUT("An unknown error occoured while app is running ...");
-    abort();
   }
   return 0;
 }
