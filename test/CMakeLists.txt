@@ -8,6 +8,8 @@ add_executable(${PROJECT_NAME} ${main} ${include_file})
 # setting up include dir
 target_include_directories(${PROJECT_NAME}
     PRIVATE
+    ${INCLUDE_BASE}
+    ${INCLUDE_BASE}/lib
     ${INCLUDE_BASE}/${PROJECT_NAME}
     ${THIRD_PARTY_INCLUDE}/Catch2/src
 )
