@@ -65,7 +65,7 @@ int main() {
   spdlog::set_formatter(std::move(formatter));
   try {
     prj_exec1::App{}.Run();
-  } catch (const util::exception::Basic &e) {
+  } catch (const util::Exception &e) {
     SPDLOG_ERROR("custom exception: {}", e.what());
   } catch (const std::system_error &e) {
     SPDLOG_ERROR("system error: {} Code: {}", e.what(), e.code().value());
