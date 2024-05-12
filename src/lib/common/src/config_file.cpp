@@ -1,7 +1,6 @@
 ﻿#include "config_file.h"
-
-#include "log.h"
 #include "spdlog/fmt/bundled/core.h"
+#include "spdlog/spdlog.h"
 #include "util.h"
 #include <algorithm>
 #include <filesystem>
@@ -92,7 +91,7 @@ std::ostream &operator<<(std::ostream &os, const Config::Section &section) {
 
 Config::Config(const std::string &file_path) : Config() {
   if (!Init(file_path)) {
-    LOG_ERROR_COUT("fail to init config file {}", file_path);
+    SPDLOG_ERROR("fail to init config file {}", file_path);
   }
 }
 
@@ -103,11 +102,11 @@ Config::~Config() noexcept {
 
 bool Config::Init(const std::string &file_path) {
   if (file_path.empty()) {
-    LOG_ERROR_COUT("file_path is empty");
+    SPDLOG_ERROR("file_path is empty");
     return false;
   }
   if (file_path.length() >= MAX_PATH_LEN) {
-    LOG_ERROR_COUT("file_path too long: {}", file_path.length());
+    SPDLOG_ERROR("file_path too long: {}", file_path.length());
     return false;
   }
   if (!std::filesystem::exists(file_path)) {

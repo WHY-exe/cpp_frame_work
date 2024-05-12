@@ -1,11 +1,25 @@
-#include "log.h"
+#include "log_formatter.h"
+#include "spdlog/pattern_formatter.h"
 
 #include <filesystem>
+#include <memory>
 #ifdef WIN32
 #include <Windows.h>
 #endif
 namespace util {
 namespace log {
+void ModuleFlagFormatter::format(const spdlog::details::log_msg &log_msg,
+                                 const std::tm &, spdlog::memory_buf_t &dest) {
+  const std::string module_name =
+      util::log::GetModuleName(log_msg.source.filename);
+  dest.append(&*module_name.begin(), &*(module_name.end() - 1));
+}
+
+std::unique_ptr<spdlog::custom_flag_formatter>
+ModuleFlagFormatter::clone() const {
+  return std::make_unique<ModuleFlagFormatter>();
+}
+
 std::string GetModuleName(std::string_view file_path) {
   std::filesystem::path path(file_path);
   return (--(--(--path.end())))->string();

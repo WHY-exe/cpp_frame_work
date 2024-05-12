@@ -31,11 +31,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}/static_lib")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BIN_DIR}")
 # executable
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BIN_DIR}")
-# add library linking dir
-link_directories(
-    ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}
-    ${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}
-)
 
 add_subdirectory(src)
 add_subdirectory(third-party)

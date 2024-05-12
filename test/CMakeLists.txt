@@ -10,8 +10,6 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
     ${INCLUDE_BASE}
     ${INCLUDE_BASE}/lib
-    ${INCLUDE_BASE}/${PROJECT_NAME}
-    ${THIRD_PARTY_INCLUDE}/Catch2/src
 )
 
 target_link_libraries(${PROJECT_NAME} 

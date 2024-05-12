@@ -10,8 +10,8 @@ App::~App() {}
 
 void App::Run() {
   std::vector<int> v;
-  spdlog::info("{}", v.at(5));
-  spdlog::info("hello world");
+  // spdlog::info("{}", v.at(5));
+  SPDLOG_INFO("hello world");
   THROW_EXCEPTION("Hello exception", "basic");
 }
 

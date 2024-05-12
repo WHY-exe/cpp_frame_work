@@ -20,6 +20,7 @@ endif()
 
 add_compile_definitions(
     SPDLOG_COMPILED_LIB
+    SPDLOG_ACTIVE_LEVEL=SPDLOG_LEVEL_TRACE
     # SPDLOG_NO_EXCEPTIONS
 )
 

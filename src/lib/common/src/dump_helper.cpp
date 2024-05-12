@@ -1,14 +1,15 @@
 #include "dump_helper.h"
-#include "log.h"
+#include "spdlog/spdlog.h"
 #include "util.h"
 #include <cstdint>
 #include <cstdio>
 
 #ifdef WIN32
-#include <direct.h>
 #include <DbgHelp.h>
 #include <corecrt_io.h>
 #include <ctime>
+#include <direct.h>
+
 #pragma comment(lib, "Dbghelp.lib")
 #endif
 
@@ -30,7 +31,7 @@ bool GenFilePath(char *buf, uint32_t path_len) noexcept {
             1900 + local.tm_year, local.tm_mon + 1, local.tm_mday,
             local.tm_hour, local.tm_min, local.tm_sec);
   if (strlen(buf) > path_len) {
-    LOG_ERROR_COUT("File path was too long! {}", buf);
+    SPDLOG_ERROR("File path was too long! {}", buf);
     return false;
   }
   return true;
@@ -50,10 +51,10 @@ int GenDump(LPEXCEPTION_POINTERS excep_ptr, const char *file_path) noexcept {
                           &minidumpExceptionInformation, nullptr, nullptr);
     CloseHandle(hFile);
     if (!isMiniDumpGenerated) {
-      LOG_ERROR_COUT("MiniDumpWriteDump failed");
+      SPDLOG_ERROR("MiniDumpWriteDump failed");
     }
   } else {
-    LOG_ERROR_COUT("Failed to create dump file");
+    SPDLOG_ERROR("Failed to create dump file");
   }
   return EXCEPTION_EXECUTE_HANDLER;
 }
@@ -81,16 +82,16 @@ LONG WINAPI ExceptionFilter(LPEXCEPTION_POINTERS lpExceptionInfo) noexcept {
 #endif
 
 #ifdef linux
-  void PrepareCore() noexcept {
-    rlimit rlim{0};
-    if (prctl(PR_SET_DUMPABLE, 1) < 0) {
-      LOG_ERROR_COUT("{}", strerror(errno));
-      return;
-    }
-    rlim.rlim_cur = RLIM_INFINITY;
-    rlim.rlim_max = RLIM_INFINITY;
-    setrlimit(RLIMIT_CORE, &rlim);
+void PrepareCore() noexcept {
+  rlimit rlim{0};
+  if (prctl(PR_SET_DUMPABLE, 1) < 0) {
+    LOG_ERROR_COUT("{}", strerror(errno));
+    return;
   }
+  rlim.rlim_cur = RLIM_INFINITY;
+  rlim.rlim_max = RLIM_INFINITY;
+  setrlimit(RLIMIT_CORE, &rlim);
+}
 #endif
 
 } // namespace dmp_helper

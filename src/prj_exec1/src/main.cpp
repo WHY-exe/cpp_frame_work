@@ -1,34 +1,36 @@
 ﻿#include "app.h"
 #include "common/exception.h"
-#include "common/log.h"
+#include "common/log_formatter.h"
 #include <csignal>
+#include <memory>
 #include <stdlib.h>
 
 #include "common/dump_helper.h"
+#include "spdlog/spdlog.h"
 
 #ifdef WIN32
 void HandleQuitSignal(int signal) noexcept {
   switch (signal) {
   case SIGSEGV:
-    LOG_ERROR_COUT("segment fault, there might be problems in code");
+    SPDLOG_ERROR("segment fault, there might be problems in code");
     break;
   case SIGABRT:
-    LOG_ERROR_COUT("signal abort, there might be problems in code");
+    SPDLOG_ERROR("signal abort, there might be problems in code");
     break;
   case SIGFPE:
-    LOG_ERROR_COUT("floating point exception");
+    SPDLOG_ERROR("floating point exception");
     break;
   case SIGILL:
-    LOG_ERROR_COUT("illegal instruction, there might be problems in code");
+    SPDLOG_WARN("illegal instruction, there might be problems in code");
     break;
   case SIGINT:
-    LOG_WARN_COUT("signal keyboard interrupt, quiting...");
+    SPDLOG_WARN("signal keyboard interrupt, quiting...");
     break;
   case SIGTERM:
-    LOG_WARN_COUT("signal terminate, quiting...");
+    SPDLOG_WARN("signal terminate, quiting...");
     break;
   default:
-    LOG_ERROR_COUT("recieving signal %d, stopping the instance", signal);
+    SPDLOG_WARN("recieving signal %d, stopping the instance", signal);
     break;
   }
   util::dmp_helper::SnapshotMem();
@@ -56,18 +58,23 @@ int main() {
   signal(SIGINT, HandleQuitSignal);
   signal(SIGTERM, HandleQuitSignal);
   signal(SIGILL, HandleQuitSignal);
+  // spdlog formatter setup: modual, fuction, and line
+  auto formatter = std::make_unique<spdlog::pattern_formatter>();
+  formatter->add_flag<util::log::ModuleFlagFormatter>('.').set_pattern(
+      "[%Y-%m-%d %H:%M:%S.%e][%.][%!:%#][tid %t][%l] %v");
+  spdlog::set_formatter(std::move(formatter));
   try {
     prj_exec1::App{}.Run();
   } catch (const util::exception::Basic &e) {
-    LOG_ERROR_COUT("custom exception: {}", e.what());
+    SPDLOG_ERROR("custom exception: {}", e.what());
   } catch (const std::system_error &e) {
-    LOG_ERROR_COUT("system error: {} Code: {}", e.what(), e.code().value());
+    SPDLOG_ERROR("system error: {} Code: {}", e.what(), e.code().value());
   } catch (const std::logic_error &e) {
-    LOG_ERROR_COUT("logic error: {}", e.what());
+    SPDLOG_ERROR("logic error: {}", e.what());
   } catch (const std::exception &e) {
-    LOG_ERROR_COUT("common exception: {}", e.what());
+    SPDLOG_ERROR("common exception: {}", e.what());
   } catch (...) {
-    LOG_ERROR_COUT("An unknown error occoured while app is running ...");
+    SPDLOG_ERROR("An unknown error occoured while app is running ...");
   }
   return 0;
 }
