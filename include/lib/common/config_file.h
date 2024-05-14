@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
@@ -74,25 +75,18 @@ class Config {
   friend std::ostream &operator<<(std::ostream &os, const Section &section);
 
 private:
-  std::string file_path_;
+  std::fstream file_;
   mutable std::vector<Section> sections_;
-  bool is_created_;
-
-private:
-  int InitConfig();
-  /**
-   * @brief updating the .ini file by writing sections
-   *        to the .ini file
-   */
-  void UpdateFile() const;
-  /**
-   * @brief clear the Section buffer
-   */
-  void Clear() noexcept;
 
 public:
   Config() noexcept = default;
   ~Config() noexcept;
+  int ReadConfig();
+  /**
+   * @brief updating the .ini file by writing sections
+   *        to the .ini file
+   */
+  void WriteFile();
   /**
    * @brief reading the file and fill the section buffer,
    *        create the file if not exists
@@ -121,18 +115,11 @@ public:
    * @return Section&
    */
   Section &operator[](std::string &&section_name);
-  inline bool IsCreated() const noexcept { return is_created_; }
   /**
    * @brief update the file with the config section and
    *        clear the section buffer
    */
   void Close();
-  /**
-   * @brief updating the section buffer by
-   *        rereading the ini file
-   * @return the number of the current sections
-   */
-  int UpdateConfig();
 };
 
 } // namespace util

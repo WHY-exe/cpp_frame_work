@@ -1,11 +1,10 @@
 ﻿#include "config_file.h"
-#include "spdlog/fmt/bundled/core.h"
 #include "spdlog/spdlog.h"
 #include "util.h"
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
-#include <ios>
+#include <iostream>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -96,8 +95,8 @@ Config::Config(const std::string &file_path) : Config() {
 }
 
 Config::~Config() noexcept {
-  if (!file_path_.empty())
-    Close();
+  if (file_.is_open())
+    file_.close();
 }
 
 bool Config::Init(const std::string &file_path) {
@@ -110,36 +109,26 @@ bool Config::Init(const std::string &file_path) {
     return false;
   }
   if (!std::filesystem::exists(file_path)) {
-    std::ofstream ofs(file_path, std::ios::trunc);
-    is_created_ = true;
+    std::ofstream ofs(file_path);
   }
-  file_path_ = file_path;
-  sections_.clear();
-  InitConfig();
+  file_.open(file_path, file_.in | file_.out);
+  if (!file_.is_open()) {
+    SPDLOG_ERROR("fail to open file");
+  }
   return true;
 }
 
-void Config::Clear() noexcept {
-  file_path_.clear();
+int Config::ReadConfig() {
   sections_.clear();
-}
-
-int Config::UpdateConfig() {
-  Clear();
-  return InitConfig();
-}
-
-int Config::InitConfig() {
   // use regex to tell wether it should be
   // a section
   std::regex sect_name_regex(R"(\[\w+?\])");
   std::smatch sm;
   // open the section file
-  std::ifstream ifs(file_path_);
   Section section;
   std::vector<std::string> file_content;
   // iterate through every line
-  for (std::string line; std::getline(ifs, line);) {
+  for (std::string line; std::getline(file_, line);) {
     // ignore the comment and the newline character
     if (std::string_view("#\n;").find(line[0]) != std::string::npos) {
       continue;
@@ -162,27 +151,21 @@ int Config::InitConfig() {
     }
     section.AddConf(std::move(tmp[0]), std::move(tmp[1]));
   }
-  ifs.close();
+  file_.seekp(0);
   sections_.push_back(std::move(section));
   return (int)sections_.size();
 }
 
-void Config::UpdateFile() const {
-  const auto bak_file_path = fmt::format("{}_bak", file_path_);
-  std::ofstream ofs(bak_file_path, std::ios::out | std::ios::trunc);
-  if (!ofs.is_open()) {
-    return;
-  }
+void Config::WriteFile() {
   for (const auto &it : sections_) {
-    ofs << it;
+    file_ << it;
   }
-  ofs.close();
-  std::filesystem::rename(bak_file_path, file_path_);
+  file_.seekp(0);
 }
 
 void Config::Close() {
-  UpdateFile();
-  Clear();
+  file_.close();
+  sections_.clear();
 }
 
 } // namespace util
