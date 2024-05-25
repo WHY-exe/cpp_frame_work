@@ -1,7 +1,8 @@
 ﻿#include "config_file.h"
-#include "spdlog/spdlog.h"
+#include "exception.h"
 #include "util.h"
 #include <algorithm>
+#include <cstdio>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -88,34 +89,30 @@ std::ostream &operator<<(std::ostream &os, const Config::Section &section) {
   return os;
 }
 
-Config::Config(const std::string &file_path) : Config() {
-  if (!Init(file_path)) {
-    SPDLOG_ERROR("fail to init config file {}", file_path);
-  }
-}
-
-Config::~Config() noexcept {
-  if (file_.is_open())
-    file_.close();
-}
-
-bool Config::Init(const std::string &file_path) {
+Config::Config(const std::string &file_path) {
   if (file_path.empty()) {
-    SPDLOG_ERROR("file_path is empty");
-    return false;
+    THROW_EXCEPTION("file_path is empty", "util");
   }
   if (file_path.length() >= MAX_PATH_LEN) {
-    SPDLOG_ERROR("file_path too long: {}", file_path.length());
-    return false;
+    char err_buf[MAX_BUFFER_SIZE];
+    snprintf(err_buf, MAX_BUFFER_SIZE, "file_path too long: %lld",
+             file_path.length());
+    THROW_EXCEPTION(err_buf, "util");
   }
-  if (!std::filesystem::exists(file_path)) {
+  // create the file path if not exists
+  std::filesystem::path path(file_path);
+  if (!std::filesystem::exists(path)) {
+    // create the parent dir first if the dir is no exists
+    if (!std::filesystem::exists(path.parent_path())) {
+      std::filesystem::create_directory(path.parent_path());
+    }
     std::ofstream ofs(file_path);
   }
+
   file_.open(file_path, file_.in | file_.out);
   if (!file_.is_open()) {
-    SPDLOG_ERROR("fail to open file");
+    THROW_EXCEPTION("fail to open file", "util");
   }
-  return true;
 }
 
 int Config::ReadConfig() {

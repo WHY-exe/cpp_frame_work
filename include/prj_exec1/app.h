@@ -5,7 +5,7 @@ class App {
 private:
 public:
   App();
-  ~App();
+  ~App() noexcept;
   void Run();
 };
 

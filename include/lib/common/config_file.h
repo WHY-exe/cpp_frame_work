@@ -79,28 +79,26 @@ private:
   mutable std::vector<Section> sections_;
 
 public:
-  Config() noexcept = default;
-  ~Config() noexcept;
-  int ReadConfig();
-  /**
-   * @brief updating the .ini file by writing sections
-   *        to the .ini file
-   */
-  void WriteFile();
+  Config() noexcept = delete;
+  ~Config() noexcept = default;
   /**
    * @brief reading the file and fill the section buffer,
    *        create the file if not exists
    *
    * @param [in] file_path the ini file path
    */
-  bool Init(const std::string &file_path);
-  /**
-   * @brief Construct a new Config object
-   *        by calling the Init method
-   * @param [in] file_path
-   */
   explicit Config(const std::string &file_path);
-
+  /**
+   * @brief reading the .ini file to the memory
+   *
+   * @return the size of sections_
+   */
+  int ReadConfig();
+  /**
+   * @brief updating the .ini file by writing sections
+   *        to the .ini file
+   */
+  void WriteFile();
   /**
    * @brief get the config section with specific
    *        section name
@@ -116,8 +114,8 @@ public:
    */
   Section &operator[](std::string &&section_name);
   /**
-   * @brief update the file with the config section and
-   *        clear the section buffer
+   * @brief close the filestream and clear the section buffer
+   *        can only reopen the file by instantiate the object angin
    */
   void Close();
 };

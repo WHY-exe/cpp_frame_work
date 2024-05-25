@@ -17,7 +17,7 @@ TEST_CASE("Factorials are computed", "[factorial]") {
 }
 
 TEST_CASE("Config file is read", "config_file") {
-  util::Config test_cfg("./test_cfg.ini");
+  util::Config test_cfg("./conf/test_cfg.ini");
   test_cfg["test_section1"]["test_key1"] = "test_value1";
   REQUIRE(test_cfg["test_section1"]["test_key1"] == "test_value1");
   test_cfg.WriteFile();

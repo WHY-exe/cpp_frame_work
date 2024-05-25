@@ -6,7 +6,7 @@
 namespace prj_exec1 {
 App::App() {}
 
-App::~App() {}
+App::~App() noexcept {}
 
 void App::Run() {
   std::vector<int> v;
