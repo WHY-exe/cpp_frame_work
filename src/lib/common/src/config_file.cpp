@@ -95,7 +95,7 @@ Config::Config(const std::string &file_path) {
   }
   if (file_path.length() >= MAX_PATH_LEN) {
     char err_buf[MAX_BUFFER_SIZE];
-    snprintf(err_buf, MAX_BUFFER_SIZE, "file_path too long: %lld",
+    snprintf(err_buf, MAX_BUFFER_SIZE, "file_path too long: %zu",
              file_path.length());
     THROW_EXCEPTION(err_buf, "util");
   }

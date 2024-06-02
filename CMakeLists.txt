@@ -1,7 +1,13 @@
 # cmake root file
 cmake_minimum_required(VERSION 3.12...3.20)
-# enter your project name here
-project(cpp_frame)
+# enter your project name heres
+project(cpp_frame VERSION 0.1.0)
+configure_file(
+    version.h.in
+    generated/version.h
+    @ONLY
+)
+
 # specify c++ standar
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -24,7 +30,7 @@ set(INCLUDE_BASE "${PROJECT_SOURCE_DIR}/include")
 set(THIRD_PARTY_INCLUDE "${PROJECT_SOURCE_DIR}/third-party")
 
 # binary output dir
-set(BIN_DIR "${CMAKE_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}")
+set(BIN_DIR "${CMAKE_SOURCE_DIR}/bin/${CMAKE_SYSTEM_NAME}/${CMAKE_BUILD_TYPE}")
 # static lib
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BIN_DIR}/static_lib")
 # shared lib
@@ -40,4 +46,8 @@ if(DO_TEST)
     enable_testing()
     add_subdirectory(test)
     add_test(NAME unit_test COMMAND unit_test)
+endif()
+# copy compile_commands.json to SOURCE_DIR to enable clangd magic
+if (EXISTS "${CMAKE_BINARY_DIR}/compile_commands.json")
+    file(COPY "${CMAKE_BINARY_DIR}/compile_commands.json" DESTINATION "${CMAKE_SOURCE_DIR}")
 endif()

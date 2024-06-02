@@ -1,12 +1,12 @@
 #include "dump_helper.h"
 #include "spdlog/spdlog.h"
-#include "util.h"
-#include <cstdint>
 #include <cstdio>
 
 #ifdef WIN32
+#include "util.h"
 #include <DbgHelp.h>
 #include <corecrt_io.h>
+#include <cstdint>
 #include <ctime>
 #include <direct.h>
 
